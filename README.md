@@ -1,2 +1,2 @@
-# bridge
+# Contract Bridge
  The game Bridge
