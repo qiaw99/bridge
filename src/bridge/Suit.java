@@ -1,0 +1,14 @@
+package bridge;
+
+public class Suit {
+	protected enum Color {
+		//∫⁄Ã“
+		SPADE,
+		//∫ÏÃ“
+		HEART,
+		//∑Ω∆¨
+		DIAMOND,
+		//≤›ª®
+		CLUB,
+	}
+}
