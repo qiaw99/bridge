@@ -20,7 +20,7 @@ public class Play {
 	private ArrayList<String> recordArrayList = new ArrayList<String>();
 	
 	private HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
-
+	private HashMap<String, Integer> trumpValueHashMap = new HashMap<String, Integer>();
 	private static final String[] DIRECTIONS = new String[]{
 			"NORTH",
 			"EAST",
@@ -28,13 +28,13 @@ public class Play {
 			"WEST"};
 	private final String[][] TRUMP = new String[][] {
 		{"PASS"},
-		{"1CLUB", "1HEART", "1SPADE", "1DIAMOND"},
-		{"2CLUB", "2HEART", "2SPADE", "2DIAMOND"},	
-		{"3CLUB", "3HEART", "3SPADE", "3DIAMOND"},
-		{"4CLUB", "4HEART", "4SPADE", "4DIAMOND"},
-		{"5CLUB", "5HEART", "5SPADE", "5DIAMOND"},
-		{"6CLUB", "6HEART", "6SPADE", "6DIAMOND"},
-		{"7CLUB", "7HEART", "7SPADE", "7DIAMOND"}
+		{"1CLUB", "1HEART", "1SPADE", "1DIAMOND", "1NT"},
+		{"2CLUB", "2HEART", "2SPADE", "2DIAMOND", "2NT"},	
+		{"3CLUB", "3HEART", "3SPADE", "3DIAMOND", "3NT"},
+		{"4CLUB", "4HEART", "4SPADE", "4DIAMOND", "4NT"},
+		{"5CLUB", "5HEART", "5SPADE", "5DIAMOND", "5NT"},
+		{"6CLUB", "6HEART", "6SPADE", "6DIAMOND", "6NT"},
+		{"7CLUB", "7HEART", "7SPADE", "7DIAMOND", "7NT"}
 	};
 
 	public Play() {
@@ -47,7 +47,11 @@ public class Play {
 		hashMap.put("J", 1);
 		hashMap.put("Q", 2);
 		hashMap.put("K", 3);
-		hashMap.put("a", 4);	
+		hashMap.put("a", 4);
+		trumpValueHashMap.put("CLUB", 1);
+		trumpValueHashMap.put("DIAMOND", 2);
+		trumpValueHashMap.put("HEART", 3);
+		trumpValueHashMap.put("SPADE", 4);
 	}
 	
 	public void initialize() {
@@ -83,14 +87,38 @@ public class Play {
 			return false;
 		}
 		
-		int temp;
-		try {
-			temp = (int)(str.charAt(0));
-		}catch(ClassCastException e) {
-			e.printStackTrace();
+		if(Character.isDigit(str.charAt(0)) && str.length() > 1) {
+			int temp = (int)(str.charAt(0)) - 48;
+			boolean status = contains(this.TRUMP[temp], str);
+			if(status) {
+				if(!(this.recordArrayList.isEmpty())) {
+					if((int)(str.charAt(0)) < (int)(this.recordArrayList.get(this.recordArrayList.size() - 1).charAt(0))){
+						System.out.println("The entered number is smaller than the last one! Try agin.");
+						System.out.println("**************************************");
+						return false;
+					}else {
+						if(trumpValueHashMap.get(str.substring(1)) < trumpValueHashMap.get(this.recordArrayList.get(this.recordArrayList.size() - 1).substring(1))){
+							System.out.println("The entered trump is not stronger than the last one! Try agin.");
+							System.out.println("**************************************");
+							return false;
+						}else {
+							return true;
+						}
+					}
+				}
+				return true;
+			}else {
+				System.out.println("The input of trump was wrong! Please use Chapital. Try agin.");
+				System.out.println("**************************************");
+				return false;
+			}
+		}else if(str.equals("PASS")) {
+			return true;
+		}else {
+			System.out.println("The input was wrong! Please start with number. Try agin.");
+			System.out.println("**************************************");
 			return false;
 		}
-		return contains(this.TRUMP[temp], str);
 	}
 	
 	@SuppressWarnings("finally")
@@ -99,11 +127,11 @@ public class Play {
 		String str = null;
 		try {
 			while(!rightInput(str)) {
-				System.out.println("What kind of trump do you want to call?\n");
+				System.out.println("What kind of trump do you want to call?");
 				str = bReader.readLine();
 			}
 		}catch(IOException e){
-			e.printStackTrace();
+			
 		}finally {
 			// null means ERROR
 			return str;
@@ -114,43 +142,58 @@ public class Play {
 		//set the start caller;
 		beginToCall(players);
 		
-		String direction = this.startCaller.direction;
-		int index = getIndex(direction);
-		int temp = index - 1;
-		
 		// initialize with "pass"
 		String tempString = TRUMP[0][0];
+		String direction = null;
+		String inputString = null;
+		int index;
 		
 		if(this.startCaller != null) {
-			while(true) {
-				index = temp + 1;
-				while(true) {
-					if(index == temp) {
-						break;
+			direction = this.startCaller.direction;
+			index = getIndex(direction);
+			
+			System.out.println("Form of input: Number+Trump, like 1HEART.");
+			while(!canPass(this.recordArrayList)) {
+				printRecordArrayList();
+				if(canResponse(index)) {
+					inputString = getInput();
+					tempString = inputString;
+					if(rightInput(inputString)) {
+						recordArrayList.add(inputString);
 					}
-					if(index < this.players.size() - 1) {
-						if(canResponse(index)) {
-							String inputString = getInput();
-							tempString = inputString;
-							recordArrayList.add(inputString);
-						}else {
-							recordArrayList.add("PASS");
-							tempString = "PASS";
-						}
-						index ++;
-					}else {
-						index = 0;
+				}else {
+					System.out.println("You have less than 6 points, please enter \"PASS\"");
+					if(rightInput(inputString)) {
+						recordArrayList.add(inputString);
 					}
+					tempString = "PASS";
 				}
-				// if other 3 players pass
-				if(canPass(recordArrayList)) {
-					tempString = recordArrayList.get(recordArrayList.size() - 4);
-					trumpColor = tempString.substring(1);
+				
+				if(index < this.players.size() - 1) {
+					index ++;
+				}else {
+					index = 0;
 				}
+				System.out.println("**************************************");
 			}
+			System.out.println("The phase of calling trumps is ended!");
+			// if other 3 players pass
+			tempString = recordArrayList.get(recordArrayList.size() - 4);
+			trumpColor = tempString.substring(1);
+			findStarter();
+			System.out.println("The trump is: " + tempString);
+			findStarter();
+			System.out.println("The starter is: " + this.starter.direction);
 		}else {
 			System.out.println("No one has more than 12 points."
 					+ " Please restart the game!");
+		}
+	}
+	
+	public void printRecordArrayList() {
+		Iterator<String> iterator = this.recordArrayList.iterator();
+		while(iterator.hasNext()) {
+			System.out.println((String)iterator.next());
 		}
 	}
 	
@@ -189,9 +232,13 @@ public class Play {
 	}
 	
 	private boolean canPass(ArrayList<String> recordArrayList) {
-		for(int i = 0; i < 3; i++) {
-			if(!(recordArrayList.get(recordArrayList.size() - 1 - i)).equals("PASS")) {
-				return false;
+		if(recordArrayList.size() < 4) {
+			return false;
+		}else {
+			for(int i = 0; i < 3; i++) {
+				if(!(recordArrayList.get(recordArrayList.size() - 1 - i)).equals("PASS")) {
+					return false;
+				}
 			}
 		}
 		return true;
@@ -207,9 +254,9 @@ public class Play {
 	}
 	
 	private void countCards() {
-		for(int i = 0; i < players.size(); i++) {
+		for(int i = 0; i < this.players.size(); i++) {
 			// calculate points of all cards for each player
-			this.sum[i] = countPoints(players.get(i).cards);
+			this.sum[i] = countPoints(this.players.get(i).cards);
 		}
 	}
 	
@@ -228,9 +275,11 @@ public class Play {
 	}
 	
 	private Player beginToCall(ArrayList<Player> players) {
+		countCards();
 		for(int i = 0; i < 4; i++) {
 			if(sum[i] >= 12) {
 				this.startCaller = players.get(i);
+				System.out.println("The start caller is: " + startCaller.direction);
 				return startCaller;
 			}
 		}
