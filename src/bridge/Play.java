@@ -8,20 +8,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
+
+import bridge.Suit.Color;
+
 public class Play {
-	Player player;
+	private Player player;
 	private Player starter;
 	private Player startCaller;
 	
-	String trumpColor;
-	ArrayList<Player> players;
+	private String trumpColor;
+	private ArrayList<Player> players;
 	private int sum[] = new int[4];
 	
 	private ArrayList<String> recordArrayList = new ArrayList<String>();
+	private ArrayList<String> showedArrayList = new ArrayList<String>();
 	
 	private HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 	private HashMap<String, Integer> trumpValueHashMap = new HashMap<String, Integer>();
-	private static final String[] DIRECTIONS = new String[]{
+	private final String[] DIRECTIONS = new String[]{
 			"NORTH",
 			"EAST",
 			"SOUTH", 
@@ -44,6 +49,12 @@ public class Play {
 		startCaller = null;
 		players = player.players;
 		
+		initializeHashtable();
+		
+		initialize();
+	}
+	
+	private void initializeHashtable() {
 		hashMap.put("J", 1);
 		hashMap.put("Q", 2);
 		hashMap.put("K", 3);
@@ -52,10 +63,13 @@ public class Play {
 		trumpValueHashMap.put("DIAMOND", 2);
 		trumpValueHashMap.put("HEART", 3);
 		trumpValueHashMap.put("SPADE", 4);
+		trumpValueHashMap.put("NT", 5);
 	}
 	
 	public void initialize() {
 		//trumpColor;
+		callTrump();
+		playTheCards();
 	}
 	
 	private int getIndex(String direction) {
@@ -122,13 +136,22 @@ public class Play {
 	}
 	
 	@SuppressWarnings("finally")
-	private String getInput() {
+	private String getInput(int difCase) {
 		BufferedReader bReader = new BufferedReader(new InputStreamReader(System.in));
 		String str = null;
 		try {
-			while(!rightInput(str)) {
-				System.out.println("What kind of trump do you want to call?");
-				str = bReader.readLine();
+			if(difCase == 0) {
+				while(!rightInput(str)) {
+					System.out.println("What kind of trump do you want to call?");
+					str = bReader.readLine();
+				}
+			}else if(difCase == 1){
+				while(!rightCard(str, 0)) {
+					System.out.println("Which card do you want to show?");
+					str = bReader.readLine();
+				}
+			}else {
+				return null;
 			}
 		}catch(IOException e){
 			
@@ -138,7 +161,7 @@ public class Play {
 		}	
 	}
 	
-	public void callTrump() {
+	private void callTrump() {
 		//set the start caller;
 		beginToCall(players);
 		
@@ -156,13 +179,13 @@ public class Play {
 			while(!canPass(this.recordArrayList)) {
 				printRecordArrayList();
 				if(canResponse(index)) {
-					inputString = getInput();
+					inputString = getInput(0);
 					tempString = inputString;
 					if(rightInput(inputString)) {
 						recordArrayList.add(inputString);
 					}
 				}else {
-					System.out.println("You have less than 6 points, please enter \"PASS\"");
+					System.out.println("You have less than 6 points, automatic PASS");
 					if(rightInput(inputString)) {
 						recordArrayList.add(inputString);
 					}
@@ -190,7 +213,7 @@ public class Play {
 		}
 	}
 	
-	public void printRecordArrayList() {
+	private void printRecordArrayList() {
 		Iterator<String> iterator = this.recordArrayList.iterator();
 		while(iterator.hasNext()) {
 			System.out.println((String)iterator.next());
@@ -247,10 +270,103 @@ public class Play {
 	private void setStarter(Player player){
 		this.starter = player;
 	}
+
+	private boolean rightCard(String str, int index) {
+		if(str == null) {
+			return false;
+		}
+		
+		int indexOfSpace = str.indexOf(' ');
+		String c = str.substring(indexOfSpace + 1);
+		// To check whether the last character is a number
+		
+		// TODO
+		if(c.length() > 1 && (Character.isDigit(c.charAt(indexOfSpace + 1)) || c.equals("J") || c.equals("Q") || c.equals("K") || c.equals("a"))) {
+			if(c.length() == indexOfSpace + 3) {
+				if(c.charAt(c.length() - 1) != '0') {
+					return false;
+				}
+			}
+			if(players.get(index).cards.contains(new Card(c, str.substring(0, indexOfSpace)))) {
+				return true;
+			}else {
+				return false;
+			}
+		}else {
+			return false;
+		}
+	}
 	
-	public Card showCard(Card card, Player player) {
-		player.cards.remove(card);
-		return card;
+	/**
+	 * To check whether the showed card can win the last one
+	 * @param str(the card)
+	 * @return true/false 
+	 */
+	private boolean canWin(String str) {
+		int indexOfSpace = str.indexOf(' ');
+		String trumpString = str.substring(0, indexOfSpace);
+		
+		if(trumpString.equals(trumpColor)) {
+			// The first time to show the card is always the winner
+			if(this.showedArrayList.isEmpty()) {
+				return true;
+			}
+			// The number is greater than the last one
+			if((str.substring(indexOfSpace + 1)).compareTo((this.showedArrayList.get(this.showedArrayList.size() - 1)).substring(str.length() - 1)) > 0) {
+				return true;
+			}else {
+				return false;
+			}
+		}
+		return false;
+	}
+	
+	private int getNextIndex(int i) {
+		if(i < 0 || i > 3) {
+			// -1 means ERROR
+			return -1;
+		}else {
+			if(i + 1 < 3) {
+				return (i + 1);
+			}else {
+				return 0;
+			}
+		}
+	}
+	
+	public void playTheCards() {
+		// the first player to play is the next player after the starter
+		int index = getNext(starter);
+		int counterIn = 0, counterOut = 0;
+		int indexOfSpace;
+		String inputString = null;
+		String tempWinnerString = null;
+		
+		while(counterOut < 13) {
+			// In each round, 4 cards will be showed
+			while(counterIn < 4) {
+				players.get(index).printAllCards();
+				System.out.println("index = " + index);
+				inputString = getInput(1);
+				indexOfSpace = inputString.indexOf(' ');
+				if(rightCard(inputString, index)) {
+					showedArrayList.add(inputString + " index: " + index);
+					players.get(index).cards.remove(new Card(inputString.substring(indexOfSpace + 1), inputString.substring(0, indexOfSpace)));
+					if(canWin(inputString)) {
+						tempWinnerString = inputString;
+					}
+					counterIn ++;
+					index = getNextIndex(index);
+				}
+				//System.out.println("All cards after showed");
+				//players.get(index).printAllCards();
+			}
+			// The winner has the ability to show the card first
+			index = this.showedArrayList.indexOf(tempWinnerString);
+			counterIn = 0;
+			counterOut ++;
+		}
+		System.out.println("Game over.");
 	}
 	
 	private void countCards() {
