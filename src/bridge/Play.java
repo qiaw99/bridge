@@ -8,10 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
-
-import bridge.Suit.Color;
-
 public class Play {
 	private Player player;
 	private Player starter;
@@ -66,8 +62,7 @@ public class Play {
 		trumpValueHashMap.put("NT", 5);
 	}
 	
-	public void initialize() {
-		//trumpColor;
+	private void initialize() {
 		callTrump();
 		playTheCards();
 	}
@@ -271,30 +266,80 @@ public class Play {
 		this.starter = player;
 	}
 
-	private boolean rightCard(String str, int index) {
+	/**
+	 * To check whether the input card is correct
+	 * @param str
+	 * @param index(the current player)
+	 * @return true/false
+	 */
+	public boolean rightCard(String str, int index) {
 		if(str == null) {
 			return false;
 		}
-		
-		int indexOfSpace = str.indexOf(' ');
-		String c = str.substring(indexOfSpace + 1);
-		// To check whether the last character is a number
-		
-		// TODO
-		if(c.length() > 1 && (Character.isDigit(c.charAt(indexOfSpace + 1)) || c.equals("J") || c.equals("Q") || c.equals("K") || c.equals("a"))) {
-			if(c.length() == indexOfSpace + 3) {
-				if(c.charAt(c.length() - 1) != '0') {
+		if(str.contains(" ")) {
+			int indexOfSpace = str.indexOf(' ');
+			
+			// Check the suit
+			String charString = str.substring(0, indexOfSpace);
+			System.out.println("The charstring: " + charString);
+			if(!(charString.equals("SPADE") || charString.equals("DIAMOND") || charString.equals("CLUB") || charString.equals("HEART"))) {
+				System.out.println("The spell of color was wrong!");
+				return false;
+			}
+			
+			// The string represents the number of the card
+			String c = str.substring(indexOfSpace + 1);
+			// To check whether the last character is a number	
+			if(str.length() >= 3 && (Character.isDigit(str.charAt(indexOfSpace + 1)) || c.equals("J") || c.equals("Q") || c.equals("K") || c.equals("a"))) {
+				if(c.length() == 2) {
+					// if the input is not equal 10
+					if(c.charAt(str.length() - 1) != '0' || c.charAt(indexOfSpace + 1) != '1') {
+						System.out.println("The number is greater than 10!");
+						return false;
+					}else {
+						return true;
+					}
+				}else if(c.length() == 1) {
+					System.out.println("The result is: " + contains(players.get(index).cards, new Card(c, str.substring(0, indexOfSpace))));
+					if(contains(players.get(index).cards, new Card(c, str.substring(0, indexOfSpace)))) {
+						return true;
+					}else {
+						System.out.println("You don't have this card!");
+						return false;
+					}
+				}else {
+					System.out.println("The length of number war wrong!");
 					return false;
 				}
-			}
-			if(players.get(index).cards.contains(new Card(c, str.substring(0, indexOfSpace)))) {
-				return true;
 			}else {
+				System.out.println("The length is not suitable or the character is wrong!");
 				return false;
 			}
 		}else {
+			System.out.println("\" \" is required!");
 			return false;
 		}
+	}
+	
+	/**
+	 * Check whether the player has this card
+	 * @param players
+	 * @param temp
+	 * @return
+	 */
+	private boolean contains(ArrayList<Card> players, Card temp) {
+		String cString = temp.c;
+		String colorString = temp.color;
+		System.out.println("The char is " + cString.toString() + ", the color is: " + colorString.toString());
+		Card tempString = null;
+		Iterator<Card> iterator = players.iterator();
+		while(iterator.hasNext()) {
+			tempString = (Card)iterator.next();
+			if((tempString.color).equals(colorString) && (tempString.c).equals(cString)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**
