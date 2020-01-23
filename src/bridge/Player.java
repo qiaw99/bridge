@@ -63,7 +63,7 @@ public class Player {
 		}
 	}
 	
-	private void printAllCards() {
+	protected void printAllCards() {
 		sortCards(this.cards);
 		Iterator<Card> iterator2 = this.cards.iterator();
 		Card tempCard;
@@ -79,7 +79,7 @@ public class Player {
 		}
 	}
 	
-	private void sortCards(ArrayList<Card> cards) {		
+	protected void sortCards(ArrayList<Card> cards) {		
 		Iterator<Card> iterator = cards.iterator();
 		Card temp;
 		while(iterator.hasNext()) {
