@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
-import bridge.Suit.Color;
-
 public class Player {
 	private Card allCards;
 	
@@ -84,11 +82,11 @@ public class Player {
 		Card temp;
 		while(iterator.hasNext()) {
 			 temp = (Card)iterator.next();
-			 if((temp.color).equals(Color.CLUB)) {
+			 if((temp.color).equals("CLUB")) {
 				 this.clubArrayList.add(temp);
-			 }else if((temp.color).equals(Color.HEART)) {
+			 }else if((temp.color).equals("HEART")) {
 				 this.heartArrayList.add(temp);
-			 }else if((temp.color).equals(Color.SPADE)) {
+			 }else if((temp.color).equals("SPADE")) {
 				 this.spadeArrayList.add(temp);
 			 }else {
 				 this.diamondArrayList.add(temp);
