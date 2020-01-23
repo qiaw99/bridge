@@ -131,7 +131,7 @@ public class Play {
 	}
 	
 	@SuppressWarnings("finally")
-	private String getInput(int difCase) {
+	private String getInput(int difCase, int index) {
 		BufferedReader bReader = new BufferedReader(new InputStreamReader(System.in));
 		String str = null;
 		try {
@@ -141,7 +141,7 @@ public class Play {
 					str = bReader.readLine();
 				}
 			}else if(difCase == 1){
-				while(!rightCard(str, 0)) {
+				while(!rightCard(str, index)) {
 					System.out.println("Which card do you want to show?");
 					str = bReader.readLine();
 				}
@@ -174,7 +174,7 @@ public class Play {
 			while(!canPass(this.recordArrayList)) {
 				printRecordArrayList();
 				if(canResponse(index)) {
-					inputString = getInput(0);
+					inputString = getInput(0, index);
 					tempString = inputString;
 					if(rightInput(inputString)) {
 						recordArrayList.add(inputString);
@@ -301,6 +301,7 @@ public class Play {
 					}
 				}else if(c.length() == 1) {
 					System.out.println("The result is: " + contains(players.get(index).cards, new Card(c, str.substring(0, indexOfSpace))));
+					//TODO
 					if(contains(players.get(index).cards, new Card(c, str.substring(0, indexOfSpace)))) {
 						return true;
 					}else {
@@ -333,9 +334,14 @@ public class Play {
 		System.out.println("The char is " + cString.toString() + ", the color is: " + colorString.toString());
 		Card tempString = null;
 		Iterator<Card> iterator = players.iterator();
+		
+		int counter = 0;
 		while(iterator.hasNext()) {
 			tempString = (Card)iterator.next();
-			if((tempString.color).equals(colorString) && (tempString.c).equals(cString)) {
+			counter++;
+			boolean b = (tempString.color).equals(colorString) && (tempString.c).equals(cString);
+			System.out.println("counter: " + counter + b);
+			if(b) {
 				return true;
 			}
 		}
@@ -392,7 +398,7 @@ public class Play {
 			while(counterIn < 4) {
 				players.get(index).printAllCards();
 				System.out.println("index = " + index);
-				inputString = getInput(1);
+				inputString = getInput(1, index);
 				indexOfSpace = inputString.indexOf(' ');
 				if(rightCard(inputString, index)) {
 					showedArrayList.add(inputString + " index: " + index);
@@ -403,8 +409,6 @@ public class Play {
 					counterIn ++;
 					index = getNextIndex(index);
 				}
-				//System.out.println("All cards after showed");
-				//players.get(index).printAllCards();
 			}
 			// The winner has the ability to show the card first
 			index = this.showedArrayList.indexOf(tempWinnerString);
