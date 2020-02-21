@@ -8,12 +8,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+
 public class Play {
 	private Player player;
 	private Player starter;
 	private Player startCaller;
 	
 	private String trumpColor;
+	private static String firstString = null;
 	private ArrayList<Player> players;
 	private int sum[] = new int[4];
 	
@@ -23,6 +25,7 @@ public class Play {
 	private HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 	private HashMap<String, Integer> valueHashMap = new HashMap<String, Integer>();
 	private HashMap<String, Integer> trumpValueHashMap = new HashMap<String, Integer>();
+	
 	private final String[] DIRECTIONS = new String[]{
 			"NORTH",
 			"EAST",
@@ -81,6 +84,11 @@ public class Play {
 		playTheCards();
 	}
 	
+	/**
+	 * Get the index according to the direction of player.
+	 * @param direction
+	 * @return
+	 */
 	private int getIndex(String direction) {
 		for(int i = 0; i < 4; i++) {
 			if(DIRECTIONS[i].compareTo(direction) == 0) {
@@ -91,6 +99,12 @@ public class Play {
 		return -1;
 	}
 	
+	/**
+	 * Check whether the input of trump is correct.
+	 * @param strings
+	 * @param str
+	 * @return
+	 */
 	private boolean contains(String[] strings, String str) {
 		for(int i = 0; i < strings.length; i++) {
 			if(strings[i].equals(str)) {
@@ -144,6 +158,13 @@ public class Play {
 		}
 	}
 	
+	/**
+	 * Check whether the play still has the cards whose trump corresponds
+	 * to the card of start player.
+	 * @param cards
+	 * @param str
+	 * @return
+	 */
 	private boolean containTrump(ArrayList<Card> cards, String str) {
 		Card tempCard;
 		Iterator<Card> iterator = cards.iterator();
@@ -158,34 +179,58 @@ public class Play {
 	
 	/**
 	 * To check, whether the player has cards with same trump
-	 * @param firstString
+	 * @param firstString: the string(input trump) for the start player
 	 * @param index
-	 * @param str
+	 * @param str: the input string of current player
 	 * @return
 	 */
-	private boolean haveCard(String firstString, int index, String str) {
-		if(containTrump(this.players.get(index).cards, firstString) && (firstString.substring(0, firstString.indexOf(' ')).equals(str.substring(0, str.indexOf(' '))))) {
+	private boolean haveCard(String firstString, int index, String str, int counter) {
+		if(counter == 0) {
+			return true;
+		}
+		if(counter == 1) {
+			return false;
+		}
+		
+		/** If the player has the cards with the same trump 
+		 *  but he doesn't show the card with the same trump 
+		 */
+		if(containTrump(this.players.get(index).cards, firstString) &&
+				!(firstString.substring(0, firstString.indexOf(' ')).equals
+						(str.substring(0, str.indexOf(' '))))) {
 			System.out.println("You still have the cards which trump corresponds to the card of the first player!");
 			return true;
 		}
 		return false;
 	}
-	
+
 	@SuppressWarnings("finally")
 	private String getInput(int difCase, int index, String firstString) {
 		BufferedReader bReader = new BufferedReader(new InputStreamReader(System.in));
 		String str = null;
+		firstString = null;
+		int counter = 0;
 		try {
 			if(difCase == 0) {
+				// The phase: calling trump
 				while(!rightInput(str)) {
 					System.out.println("What kind of trump do you want to call?");
 					str = bReader.readLine();
 				}
 			}else if(difCase == 1){
+				// The phase: showing cards
 				//TODO
-				while((!rightCard(str, index)) || haveCard(firstString, index, str)) {
-					System.out.println("Which card do you want to show?");
+				while((!rightCard(str, index)) || haveCard(firstString, index, str, counter)) {
+					System.out.println("Which card do you want to show?");		
 					str = bReader.readLine();
+					if(counter < 4) {
+						counter ++;
+					}else {
+						counter = 0;
+					}
+					if(counter == 1) {
+						firstString = str;
+					}
 				}
 			}else {
 				return null;
@@ -257,6 +302,11 @@ public class Play {
 		}
 	}
 	
+	/**
+	 * Search for the next player.
+	 * @param player
+	 * @return
+	 */
 	private int getNext(Player player) {
 		int index = getIndex(player.direction);
 		if(index + 1 <= 3) {
@@ -266,6 +316,9 @@ public class Play {
 		}
 	}
 	
+	/**
+	 * Search for the starter.
+	 */
 	private void findStarter() {
 		int size = recordArrayList.size();
 		int rest = size % 4;
@@ -291,6 +344,11 @@ public class Play {
 		}
 	}
 	
+	/**
+	 * Check whether the phase of calling trump can be ended.
+	 * @param recordArrayList
+	 * @return
+	 */
 	private boolean canPass(ArrayList<String> recordArrayList) {
 		if(recordArrayList.size() < 4) {
 			return false;
@@ -429,7 +487,7 @@ public class Play {
 		int indexOfSpace;
 		String inputString = null;
 		String tempWinnerString = null;
-		String firstString= null;
+		
 		
 		while(counterOut < 13) {
 			// In each round, 4 cards will be showed
@@ -453,7 +511,6 @@ public class Play {
 					}
 					counterIn ++;
 					index = getNextIndex(index);
-					System.out.println("After index" + index);
 				}
 				System.out.println("**************************************");
 			}
@@ -466,14 +523,20 @@ public class Play {
 		System.out.println("Game over.");
 	}
 	
+	/**
+	 * Calculate points of all cards for each player
+	 */
 	private void countCards() {
 		for(int i = 0; i < this.players.size(); i++) {
-			// calculate points of all cards for each player
 			this.sum[i] = countPoints(this.players.get(i).cards);
 		}
 	}
 	
-	// add all cards with JQKA with help of HashMap
+	/**
+	 * Add all cards with JQKA with help of HashMap
+	 * @param cards
+	 * @return
+	 */
 	private int countPoints(ArrayList<Card> cards) {
 		int counter = 0; 
 		Iterator<Card> iterator = cards.iterator();
@@ -487,6 +550,11 @@ public class Play {
 		return counter;
 	}
 	
+	/**
+	 * Find out which player can start to show the card
+	 * @param players
+	 * @return
+	 */
 	private Player beginToCall(ArrayList<Player> players) {
 		countCards();
 		for(int i = 0; i < 4; i++) {
